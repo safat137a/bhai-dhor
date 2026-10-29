@@ -81,7 +81,6 @@ button:hover{filter:brightness(1.06)}button:active{transform:translateY(2px);box
 
   <div class="panel" id="start">
     <h1>ভাই ধর ভাইরে! 😂</h1>
-    <small id="updateNotice" style="display:block;max-width:560px;padding:8px 12px;border:1px solid rgba(255,209,102,.55);border-radius:10px;background:rgba(255,209,102,.10);color:#ffe7a3">✨ নতুন আপডেট: মোবাইলের স্কোর/বাটনের লেআউট, ঢিলের সতর্কতা ও গেমের আরামদায়ক অভিজ্ঞতা উন্নত করা হয়েছে। আগের অনলাইন স্কোর মুছতে হবে না।</small>
     <small>কে পালাবে বেছে নাও, অন্যজন তাকে তাড়া করবে। বাধায় ধাক্কা খেলে ভাই কাছে চলে আসে, ধরা পড়লে মজা শুরু!</small>
     <label for="playerName"><b>তোমার নাম লিখো</b></label>
     <input id="playerName" type="text" maxlength="24" placeholder="যেমন: সাফাত" autocomplete="nickname" />
@@ -175,8 +174,8 @@ function submitOnlineScore(name,score){
     var bestScore=Math.max(cleanScore,Math.floor(Number(old.score)||0));
     return entryRef.set({name:(name||old.name||'Player').slice(0,24),device:getDeviceLabel(),score:bestScore,updatedAt:Date.now()}).then(function(){
       scoreSaveStatus=cleanScore>=Number(old.score||0)
-        ? '🌐 তোমার '+cleanScore+' স্কোর অনলাইনে সেভ হয়েছে।'
-        : '🌐 আগের সেরা স্কোর '+bestScore+' রাখা হয়েছে; ডিভাইসের নাম আপডেট হয়েছে।';
+        ? '🌐 স্কোর সেভ হয়েছে।'
+        : '';
     });
   }).then(function(){
     setLeaderHint(scoreSaveStatus);
@@ -358,7 +357,7 @@ function dust(x,n){for(var i=0;i<n;i++)parts.push({x:x,y:G,vx:-1-Math.random()*2
 function confetti(x,y,n){var cs=['#ffb400','#e4572e','#2e86ab','#7bd389','#fff'];for(var i=0;i<n;i++)parts.push({x:x,y:y,vx:(Math.random()-.5)*11,vy:-Math.random()*10,life:80,c:rnd(cs),s:4+Math.random()*4,g:.35});}
 function popText(t,x,y,c){pops.push({t:t,x:x,y:y,c:c||'#fff',life:55});}
 function updParts(){pops.forEach(function(q){q.y-=1.2;q.life--;});pops=pops.filter(function(q){return q.life>0;});parts.forEach(function(q){q.x+=q.vx;q.y+=q.vy;q.vy+=q.g;q.life--;});parts=parts.filter(function(q){return q.life>0;});}
-function reset(){var mobileGame=W<700;var startX=mobileGame?W*.40:270;var startGap=mobileGame?Math.min(145,W*.29):220;P={x:startX,y:G,vy:0,jumps:0,inv:0,stun:0};C={y:G,vy:0,gap:startGap};obs=[];items=[];thrownSlippers=[];throwWarning=0;nextThrowTick=1200+Math.floor(Math.random()*300);pops=[];nextMile=100;parts=[];spd=5.8;score=0;tick=0;nextIn=60;shake=0;bub=null;bubT=120;caughtT=0;lifeCharges=0;lifePickupsSpawned=0;}
+function reset(){var mobileGame=W<700;var startX=mobileGame?W*.55:270;var startGap=mobileGame?Math.min(130,W*.25):220;P={x:startX,y:G,vy:0,jumps:0,inv:0,stun:0};C={y:G,vy:0,gap:startGap};obs=[];items=[];thrownSlippers=[];throwWarning=0;nextThrowTick=1200+Math.floor(Math.random()*300);pops=[];nextMile=100;parts=[];spd=5.8;score=0;tick=0;nextIn=60;shake=0;bub=null;bubT=120;caughtT=0;lifeCharges=0;lifePickupsSpawned=0;}
 var lastVoice=-9999,everJumped=false;
 function boing(n){var k=n>1?1.3:1;tone(260*k,.16,'sine',.07,640*k);tone(420*k,.1,'triangle',.035,900*k,.05);}
 function jump(){if(state!=='play')return;if(P.jumps<2){P.vy=P.jumps?-12.5:-14;P.jumps++;everJumped=true;var nw=performance.now();if(nw-lastVoice>6000&&Math.random()<.2){lastVoice=nw;stop('jump');if(!play('jump',.9))boing(P.jumps);}else boing(P.jumps);}}
@@ -380,13 +379,13 @@ function update(){
   if(P.y>=G){if(P.vy>8)dust(P.x,6);P.y=G;P.vy=0;P.jumps=0;}
   if(P.inv>0)P.inv--;if(P.stun>0)P.stun--;
   C.vy+=.75;C.y+=C.vy;if(C.y>=G){C.y=G;C.vy=0;}
-  C.gap=Math.min(W<700?Math.min(160,P.x-42):250,C.gap+.04);
+  C.gap=Math.min(W<700?Math.min(130,P.x-70):250,C.gap+.025);
   var cx=P.x-C.gap;
   if(C.y>=G)for(var j=0;j<obs.length;j++){if(obs[j].x>cx+8&&obs[j].x<cx+80){C.vy=-13.5;break;}}
   if(throwWarning>0){
     throwWarning--;
     if(throwWarning===1){
-      thrownSlippers.push({x:P.x-C.gap+27,y:G-43,rot:-.25});
+      thrownSlippers.push({x:P.x-C.gap+18,y:G-55,rot:-.25});
       say(sel,'ঢিল আসছে—লাফ দে! 🪨');
     }
   } else if(tick>=nextThrowTick){
@@ -412,7 +411,7 @@ function update(){
       say(sel,'ইয়েস! একটা এক্সট্রা লাইফ! ❤️');
       tone(660,.1,'sine',.07,990);tone(990,.14,'triangle',.06,1320,.06);
     } else {
-      score+=10;C.gap=Math.min(W<700?Math.min(160,P.x-42):250,C.gap+24);
+      score+=10;C.gap=Math.min(W<700?Math.min(130,P.x-70):250,C.gap+18);
       popText('+১০ 😋',P.x,P.y-150,'#ffd84a');
       tone(660,.1,'square',.06,990);tone(990,.12,'square',.05,1320,.08);
     }
@@ -459,15 +458,32 @@ function renderLeaderboard(){
   function draw(list,online){
     box.innerHTML='';
     if(!list.length){box.innerHTML='<small style="padding:12px">এখনো কোনো স্কোর নেই। প্রথমে গেম খেলে স্কোর তৈরি করো!</small>';return;}
+    var byName={},clean=[];
+    list.forEach(function(item){
+      var nm=String(item.name||'Player').trim(),key=nm.toLocaleLowerCase();
+      var scoreValue=Math.max(0,Math.floor(Number(item.score)||0));
+      if(!byName[key]){byName[key]={name:nm,device:item.device||'',score:scoreValue,updatedAt:Number(item.updatedAt)||0};clean.push(byName[key]);}
+      else if(scoreValue>byName[key].score){byName[key].score=scoreValue;byName[key].device=item.device||byName[key].device;byName[key].updatedAt=Number(item.updatedAt)||byName[key].updatedAt;}
+    });
+    list=clean;
+    var myName=String(playerName||'').trim().toLocaleLowerCase();
+    if(online && myName && myName!=='player'){
+      var myEntry=byName[myName];
+      if(myEntry && myEntry.score>best){
+        best=myEntry.score;
+        try{localStorage.setItem('best',String(best));}catch(e){}
+        var hiEl=document.getElementById('hi');if(hiEl)hiEl.textContent='সেরা: '+best;
+      }
+    }
     list.sort(function(a,b){return (Number(b.score)||0)-(Number(a.score)||0);});
     list=list.slice(0,10);
     list.forEach(function(item,i){
       var row=document.createElement('div');row.className='leader-row';
       var rank=document.createElement('span');rank.className='leader-rank';rank.textContent=['🥇','🥈','🥉'][i]||('#'+(i+1));
       var nm=document.createElement('span');nm.className='leader-person';nm.textContent=item.name||'Player';
-      var device=document.createElement('small');device.textContent=item.device||'পুরোনো এন্ট্রি';device.style.cssText='font-size:11px;opacity:.78;white-space:nowrap;border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:2px 5px';
+      var device=null;if(item.device){device=document.createElement('small');device.textContent=item.device;device.style.cssText='font-size:11px;opacity:.78;white-space:nowrap;border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:2px 5px';}
       var sc=document.createElement('span');sc.className='leader-score';sc.textContent=(Number(item.score)||0)+' পয়েন্ট';
-      row.appendChild(rank);row.appendChild(nm);row.appendChild(device);row.appendChild(sc);box.appendChild(row);
+      row.appendChild(rank);row.appendChild(nm);if(device)row.appendChild(device);row.appendChild(sc);box.appendChild(row);
     });
     if(online)setLeaderHint(scoreSaveStatus || '🌐 গ্লোবাল টপ ১০ · বিভিন্ন ফোনের সেরা স্কোর');
     else if(!fbReady)setLeaderHint('লোকাল টপ ১০ · অনলাইন সেটআপ না হওয়া পর্যন্ত শুধু এই ডিভাইসের স্কোর');
@@ -478,7 +494,7 @@ function renderLeaderboard(){
     if(leaderboardValueHandler)leaderboardRef.off('value',leaderboardValueHandler);
     leaderboardValueHandler=function(snap){
       var data=snap.val()||{},list=[];
-      Object.keys(data).forEach(function(k){var x=data[k]||{};list.push({name:x.name||'Player',device:x.device||'পুরোনো এন্ট্রি',score:Number(x.score)||0,updatedAt:Number(x.updatedAt)||0});});
+      Object.keys(data).forEach(function(k){var x=data[k]||{};list.push({name:x.name||'Player',device:x.device||'',score:Number(x.score)||0,updatedAt:Number(x.updatedAt)||0});});
       draw(list,true);
     };
     leaderboardRef.on('value',leaderboardValueHandler,function(err){
