@@ -359,7 +359,7 @@ function dust(x,n){for(var i=0;i<n;i++)parts.push({x:x,y:G,vx:-1-Math.random()*2
 function confetti(x,y,n){var cs=['#ffb400','#e4572e','#2e86ab','#7bd389','#fff'];for(var i=0;i<n;i++)parts.push({x:x,y:y,vx:(Math.random()-.5)*11,vy:-Math.random()*10,life:80,c:rnd(cs),s:4+Math.random()*4,g:.35});}
 function popText(t,x,y,c){pops.push({t:t,x:x,y:y,c:c||'#fff',life:55});}
 function updParts(){pops.forEach(function(q){q.y-=1.2;q.life--;});pops=pops.filter(function(q){return q.life>0;});parts.forEach(function(q){q.x+=q.vx;q.y+=q.vy;q.vy+=q.g;q.life--;});parts=parts.filter(function(q){return q.life>0;});}
-function reset(){var mobileGame=W<700;/* On phones, place both characters further left and separate them for a clearer start. */var startX=mobileGame?W*.48:270;var startGap=mobileGame?Math.min(150,W*.32):220;P={x:startX,y:G,vy:0,jumps:0,inv:0,stun:0};C={y:G,vy:0,gap:startGap};obs=[];items=[];thrownSlippers=[];throwWarning=0;nextThrowTick=1200+Math.floor(Math.random()*300);pops=[];nextMile=100;parts=[];spd=5.8;score=0;tick=0;nextIn=60;shake=0;bub=null;bubT=120;caughtT=0;lifeCharges=0;lifePickupsSpawned=0;}
+function reset(){var mobileGame=W<700;/* On phones, keep the front character slightly left of center and the trailing character very close to the left edge, preserving visible space between them. */var startX=mobileGame?W*.40:270;var startGap=mobileGame?Math.max(48,startX-18):220;P={x:startX,y:G,vy:0,jumps:0,inv:0,stun:0};C={y:G,vy:0,gap:startGap};obs=[];items=[];thrownSlippers=[];throwWarning=0;nextThrowTick=1200+Math.floor(Math.random()*300);pops=[];nextMile=100;parts=[];spd=5.8;score=0;tick=0;nextIn=60;shake=0;bub=null;bubT=120;caughtT=0;lifeCharges=0;lifePickupsSpawned=0;}
 var lastVoice=-9999,everJumped=false;
 function boing(n){var k=n>1?1.3:1;tone(260*k,.16,'sine',.07,640*k);tone(420*k,.1,'triangle',.035,900*k,.05);}
 function jump(){if(state!=='play')return;if(P.jumps<2){P.vy=P.jumps?-12.5:-14;P.jumps++;everJumped=true;var nw=performance.now();if(nw-lastVoice>6000&&Math.random()<.2){lastVoice=nw;stop('jump');if(!play('jump',.9))boing(P.jumps);}else boing(P.jumps);}}
@@ -381,7 +381,7 @@ function update(){
   if(P.y>=G){if(P.vy>8)dust(P.x,6);P.y=G;P.vy=0;P.jumps=0;}
   if(P.inv>0)P.inv--;if(P.stun>0)P.stun--;
   C.vy+=.75;C.y+=C.vy;if(C.y>=G){C.y=G;C.vy=0;}
-  C.gap=Math.min(W<700?Math.min(130,P.x-70):250,C.gap+.025);
+  C.gap=Math.min(W<700?Math.min(96,P.x-28):250,C.gap+.025);
   var cx=P.x-C.gap;
   if(C.y>=G)for(var j=0;j<obs.length;j++){if(obs[j].x>cx+8&&obs[j].x<cx+80){C.vy=-13.5;break;}}
   if(throwWarning>0){
@@ -413,7 +413,7 @@ function update(){
       say(sel,'ইয়েস! একটা এক্সট্রা লাইফ! ❤️');
       tone(660,.1,'sine',.07,990);tone(990,.14,'triangle',.06,1320,.06);
     } else {
-      score+=10;C.gap=Math.min(W<700?Math.min(130,P.x-70):250,C.gap+18);
+      score+=10;C.gap=Math.min(W<700?Math.min(96,P.x-48):250,C.gap+18);
       popText('+১০ 😋',P.x,P.y-150,'#ffd84a');
       tone(660,.1,'square',.06,990);tone(990,.12,'square',.05,1320,.08);
     }
@@ -669,11 +669,11 @@ function saveEditedPlayerName(newName){
     Object.keys(data).forEach(function(k){if(k!==fbUid && String((data[k]||{}).name||'').trim().toLocaleLowerCase()===clean.toLocaleLowerCase())duplicate=true;});
     if(duplicate){if(hint)hint.textContent='এই নামটি ইতিমধ্যে নেওয়া হয়েছে। অন্য নাম বেছে নাও।';return false;}
     var entryRef=fbDb.ref('leaderboard/'+fbUid);
-    return entryRef.once('value').then(function(entrySnap){if(!entrySnap.exists()){throw new Error('Leaderboard entry not found for this user');}return entryRef.update({name:clean,updatedAt:Date.now()}).then(function(){
+    return entryRef.once('value').then(function(entrySnap){if(!entrySnap.exists()){throw new Error('Leaderboard entry not found for this user');}var oldEntry=entrySnap.val()||{};return entryRef.set({name:clean,device:oldEntry.device||getDeviceLabel(),score:Math.max(0,Math.floor(Number(oldEntry.score)||0)),updatedAt:Date.now()}).then(function(){
       playerName=clean;try{localStorage.setItem('bhaiDhorPlayerName',clean);localStorage.setItem('bhaiDhorNameChangedAt',String(Date.now()));}catch(e){}
       nameEditMode=false;var field=document.getElementById('playerName');field.value=clean;field.readOnly=true;field.style.opacity='.8';document.getElementById('savePlayerName').style.display='none';if(hint)hint.textContent='নাম পরিবর্তন হয়েছে। পরেরবার ৭ দিন পর বদলাতে পারবে।';renderLeaderboard();return true;
     });});
-  }).catch(function(err){console.warn('Name update failed',err);if(hint)hint.textContent='নাম সেভ হয়নি। ইন্টারনেট/Firebase সংযোগ পরীক্ষা করে আবার চেষ্টা করো।';return false;});
+  }).catch(function(err){console.warn('Name update failed',err);if(hint){var msg=err&&err.code==='PERMISSION_DENIED'?'Firebase অনুমতি দিচ্ছে না (PERMISSION_DENIED)। Database Rules পরীক্ষা করতে হবে।':(err&&err.code==='NETWORK_ERROR'?'ইন্টারনেট সংযোগে সমস্যা হয়েছে।':'নাম সেভ হয়নি। '+(err&&err.code?('ত্রুটি: '+err.code+'. '):'')+'আবার চেষ্টা করো।');hint.textContent=msg;}return false;});
 }
 var tutorialForStart=false;
 function showTutorial(forStart){tutorialForStart=!!forStart;document.getElementById('start').classList.add('hide');document.getElementById('tutorial').classList.remove('hide');document.getElementById('tutorialDone').textContent=tutorialForStart?'বুঝেছি—খেলা শুরু':'বুঝেছি—মেনুতে ফিরি';state='tutorial';}
