@@ -463,19 +463,26 @@ function renderLeaderboard(){
   function draw(list,online){
     box.innerHTML='';
     if(!list.length){box.innerHTML='<small style="padding:12px">এখনো কোনো স্কোর নেই। প্রথমে গেম খেলে স্কোর তৈরি করো!</small>';return;}
-    // Keep every Firebase player entry visible. Do not merge players by name:
-    // two different players may share a name, and merging could hide a new player.
-    list=list.map(function(item){
-      return {
-        name:String(item.name||'Player').trim()||'Player',
-        device:item.device||'',
-        score:Math.max(0,Math.floor(Number(item.score)||0)),
-        updatedAt:Number(item.updatedAt)||0
-      };
+    // Normalize entries and merge repeated entries for the same displayed player name.
+    // Anonymous Firebase IDs can differ across browsers/devices; duplicate records
+    // should not make the same named player occupy multiple leaderboard positions.
+    var merged={};
+    list.forEach(function(item){
+      var nm=String(item.name||'Player').trim()||'Player';
+      var key=nm.toLocaleLowerCase();
+      var entry={name:nm,device:item.device||'',score:Math.max(0,Math.floor(Number(item.score)||0)),updatedAt:Number(item.updatedAt)||0};
+      if(!merged[key] || entry.score>merged[key].score){
+        merged[key]=entry;
+      }else if(entry.updatedAt>merged[key].updatedAt){
+        merged[key].device=entry.device;
+        merged[key].updatedAt=entry.updatedAt;
+      }
     });
-    // Avoid undefined byName reference: it previously threw a ReferenceError
-    // and stopped leaderboard rows from being rendered. Rank from Firebase scores below.
-    list.sort(function(a,b){return (Number(b.score)||0)-(Number(a.score)||0);});
+    list=Object.keys(merged).map(function(key){return merged[key];});
+    list.sort(function(a,b){
+      var diff=(Number(b.score)||0)-(Number(a.score)||0);
+      return diff || (Number(b.updatedAt)||0)-(Number(a.updatedAt)||0);
+    });
     list=list.slice(0,10);
     list.forEach(function(item,i){
       var row=document.createElement('div');row.className='leader-row';
