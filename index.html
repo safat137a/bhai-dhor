@@ -92,12 +92,78 @@ button:hover{filter:brightness(1.06)}button:active{transform:translateY(2px);box
     <div class="row"><button id="again">আবার খেলো</button><button id="swap" style="background:#e4572e;color:#fff">ভূমিকা বদলাও</button><button id="menu" style="background:#3b5679;color:#fff">মেনুতে যাও</button><button id="showLeaderboardOver" style="background:#3b5679;color:#fff">🏆 লিডারবোর্ড</button></div>
   </div>
 
-  <div class="panel hide" id="leaderboard"><h1>🏆 লিডারবোর্ড</h1><small id="leaderHint">এই ডিভাইসে সংরক্ষিত সেরা স্কোর</small><div id="leaderList"></div><button id="clearLeaderboard" style="background:#9b2c2c;color:#fff;font-size:15px">লিডারবোর্ড মুছো</button><button id="leaderBack" style="background:#3b5679;color:#fff">ফিরে যাও</button></div>
+  <div class="panel hide" id="leaderboard"><h1>🏆 গ্লোবাল লিডারবোর্ড</h1><small id="leaderHint">অনলাইন লিডারবোর্ড সেটআপ করা হচ্ছে…</small><div id="leaderList"></div><button id="refreshLeaderboard" style="background:#256d85;color:#fff">🔄 রিফ্রেশ</button><button id="leaderBack" style="background:#3b5679;color:#fff">ফিরে যাও</button></div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 (function(){
+/*
+  ONLINE LEADERBOARD SETUP:
+  1) Create a Firebase project + Realtime Database.
+  2) Enable Authentication > Sign-in method > Anonymous.
+  3) Replace the placeholders below with your Firebase Web App config.
+  4) Add the Realtime Database rules shown in the setup guide.
+*/
+var firebaseConfig = {
+  apiKey: "PASTE_FIREBASE_API_KEY",
+  authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
+  databaseURL: "PASTE_REALTIME_DATABASE_URL",
+  projectId: "PASTE_PROJECT_ID",
+  appId: "PASTE_FIREBASE_APP_ID"
+};
+var fbReady=false, fbDb=null, fbUid=null, fbSetupAttempted=false, pendingOnlineScore=null, leaderboardRef=null, leaderboardValueHandler=null;
+function firebaseConfigured(){
+  return firebaseConfig.apiKey && firebaseConfig.apiKey.indexOf('PASTE_')!==0 &&
+    firebaseConfig.projectId && firebaseConfig.projectId.indexOf('PASTE_')!==0 &&
+    firebaseConfig.databaseURL && firebaseConfig.databaseURL.indexOf('PASTE_')!==0 &&
+    firebaseConfig.appId && firebaseConfig.appId.indexOf('PASTE_')!==0;
+}
+function setLeaderHint(s){
+  var el=document.getElementById('leaderHint');if(el)el.textContent=s;
+}
+function submitOnlineScore(name,score){
+  if(!firebaseConfigured())return;
+  if(!fbReady || !fbDb || !fbUid){
+    if(!pendingOnlineScore || Number(score)>=Number(pendingOnlineScore.score))pendingOnlineScore={name:name,score:score};
+    return;
+  }
+  var entryRef=fbDb.ref('leaderboard/'+fbUid);
+  entryRef.once('value').then(function(snap){
+    var old=snap.val();
+    if(!old || Number(score)>=Number(old.score||0)){
+      return entryRef.set({name:(name||'Player').slice(0,24),score:Math.max(0,Math.floor(Number(score)||0)),updatedAt:Date.now()});
+    }
+  }).then(function(){
+    if(document.getElementById('leaderboard') && !document.getElementById('leaderboard').classList.contains('hide'))renderLeaderboard();
+  }).catch(function(err){console.warn('Online score save failed',err);setLeaderHint('স্কোর অনলাইনে সেভ হয়নি। Database rules ও internet পরীক্ষা করো।');});
+}
+function onlineLeaderboardInit(){
+  if(fbSetupAttempted)return;fbSetupAttempted=true;
+  if(!firebaseConfigured() || !window.firebase){
+    setLeaderHint('অনলাইন লিডারবোর্ড চালু করতে Firebase সেটআপ বাকি। আপাতত এই ডিভাইসের স্কোর দেখানো হচ্ছে।');
+    return;
+  }
+  try{
+    firebase.initializeApp(firebaseConfig);
+    fbDb=firebase.database();
+    firebase.auth().signInAnonymously().then(function(cred){
+      fbUid=cred.user.uid;fbReady=true;
+      setLeaderHint('🌐 অনলাইন লিডারবোর্ড · সবার স্কোর একসঙ্গে দেখা যাবে');
+      if(pendingOnlineScore){var queued=pendingOnlineScore;pendingOnlineScore=null;submitOnlineScore(queued.name,queued.score);}
+      if(document.getElementById('leaderboard') && !document.getElementById('leaderboard').classList.contains('hide'))renderLeaderboard();
+    }).catch(function(err){
+      console.warn('Firebase anonymous sign-in failed',err);
+      setLeaderHint('অনলাইন লগইন ব্যর্থ। Firebase Anonymous Auth সেটিংস দেখো।');
+    });
+  }catch(err){
+    console.warn('Firebase init failed',err);
+    setLeaderHint('Firebase কনফিগারেশন ঠিক হয়নি। সেটআপের তথ্য আবার দেখো।');
+  }
+}
 var cv=document.getElementById('c'),ctx=cv.getContext('2d'),asp=innerWidth/Math.max(1,innerHeight),W=800,H=400;
 if(asp<1){W=520;H=Math.min(760,Math.max(480,Math.round(W/asp*.78)));}
 cv.width=W;cv.height=H;var G=H-70;
@@ -180,7 +246,7 @@ function spawn(){var t=Math.random(),o;
   else if(t<.75)o={w:52,h:68,t:'slipper'};
   else o={w:90,h:40,t:'bus'};
   o.x=W+20;o.phase=Math.random()*Math.PI*2;obs.push(o);
-  if(lifePickupsSpawned<2 && Math.random()<.12){
+  if(tick>=2400 && lifePickupsSpawned<1 && Math.random()<.10){
     items.push({x:o.x+o.w/2+70,y:G-105,a:Math.random()*6,type:'heart'});
     lifePickupsSpawned++;
   } else if(Math.random()<.4)items.push({x:o.x+o.w/2+50,y:G-(165+Math.random()*30),a:Math.random()*6,type:'curry'});
@@ -202,7 +268,7 @@ function update(){
   for(var q=items.length-1;q>=0;q--){var it=items[q];if(Math.abs(it.x-P.x)<32&&it.y>P.y-140&&it.y<P.y-8){
     items.splice(q,1);
     if(it.type==='heart'){
-      lifeCharges=Math.min(2,lifeCharges+1);
+      lifeCharges=Math.min(1,lifeCharges+1);
       popText('❤️ +১ লাইফ!',P.x,P.y-150,'#ff477e');
       say(sel,'ইয়েস! একটা এক্সট্রা লাইফ! ❤️');
       tone(660,.1,'sine',.07,990);tone(990,.14,'triangle',.06,1320,.06);
@@ -230,7 +296,7 @@ function update(){
     } else return caught();
   }
   if(--bubT<=0){bubT=170+Math.random()*80;if(Math.random()<.5)say(sel,rnd(RL));else say(who(),rnd(CL));}
-  document.getElementById('sc').textContent='স্কোর: '+Math.floor(score)+'   ❤️ '+lifeCharges+'/২';
+  document.getElementById('sc').textContent='স্কোর: '+Math.floor(score)+'   ❤️ '+lifeCharges+'/১';
 }
 function caught(){state='caught';caughtT=0;music(false);if(!play('caught',1))sfx.caught();shake=16;P.vy=-7;confetti(P.x,G-70,60);say(who(),'ধরছি!! 😈');}
 function updCaught(){
@@ -246,16 +312,43 @@ function saveLeaderboard(name,score){
   var list=readLeaderboard();list.push({name:(name||'Player').slice(0,24),score:score,date:Date.now()});
   list.sort(function(a,b){return b.score-a.score;});list=list.slice(0,10);
   try{localStorage.setItem('leaderboard',JSON.stringify(list));}catch(e){}
+  // Each anonymous Firebase account has one entry; its score can only stay the same or improve.
+  submitOnlineScore(name,score);
 }
 function renderLeaderboard(){
-  var list=readLeaderboard(),box=document.getElementById('leaderList');box.innerHTML='';
-  if(!list.length){box.innerHTML='<small style="padding:12px">এখনো কোনো স্কোর নেই। খেলা শেষ হলে এখানে দেখা যাবে!</small>';return;}
-  list.forEach(function(item,i){var row=document.createElement('div');row.className='leader-row';
-    var rank=document.createElement('span');rank.className='leader-rank';rank.textContent=['🥇','🥈','🥉'][i]||('#'+(i+1));
-    var nm=document.createElement('span');nm.className='leader-person';nm.textContent=item.name||'Player';
-    var sc=document.createElement('span');sc.className='leader-score';sc.textContent=(Number(item.score)||0)+' পয়েন্ট';
-    row.appendChild(rank);row.appendChild(nm);row.appendChild(sc);box.appendChild(row);
-  });
+  var box=document.getElementById('leaderList');
+  function draw(list,online){
+    box.innerHTML='';
+    if(!list.length){box.innerHTML='<small style="padding:12px">এখনো কোনো স্কোর নেই। প্রথমে গেম খেলে স্কোর তৈরি করো!</small>';return;}
+    list.sort(function(a,b){return (Number(b.score)||0)-(Number(a.score)||0);});
+    list=list.slice(0,10);
+    list.forEach(function(item,i){
+      var row=document.createElement('div');row.className='leader-row';
+      var rank=document.createElement('span');rank.className='leader-rank';rank.textContent=['🥇','🥈','🥉'][i]||('#'+(i+1));
+      var nm=document.createElement('span');nm.className='leader-person';nm.textContent=item.name||'Player';
+      var sc=document.createElement('span');sc.className='leader-score';sc.textContent=(Number(item.score)||0)+' পয়েন্ট';
+      row.appendChild(rank);row.appendChild(nm);row.appendChild(sc);box.appendChild(row);
+    });
+    if(online)setLeaderHint('🌐 গ্লোবাল টপ ১০ · বিভিন্ন ফোনের সেরা স্কোর');
+    else if(!fbReady)setLeaderHint('লোকাল টপ ১০ · অনলাইন সেটআপ না হওয়া পর্যন্ত শুধু এই ডিভাইসের স্কোর');
+  }
+  if(fbReady && fbDb){
+    setLeaderHint('অনলাইন স্কোর লোড হচ্ছে…');
+    if(!leaderboardRef)leaderboardRef=fbDb.ref('leaderboard');
+    if(leaderboardValueHandler)leaderboardRef.off('value',leaderboardValueHandler);
+    leaderboardValueHandler=function(snap){
+      var data=snap.val()||{},list=[];
+      Object.keys(data).forEach(function(k){var x=data[k]||{};list.push({name:x.name||'Player',score:Number(x.score)||0,updatedAt:Number(x.updatedAt)||0});});
+      draw(list,true);
+    };
+    leaderboardRef.on('value',leaderboardValueHandler,function(err){
+      console.warn('Online leaderboard read failed',err);
+      draw(readLeaderboard(),false);
+      setLeaderHint('অনলাইন লিডারবোর্ড লোড হয়নি; এই ডিভাইসের স্কোর দেখানো হচ্ছে। Rules/URL পরীক্ষা করো।');
+    });
+  }else{
+    draw(readLeaderboard(),false);
+  }
 }
 function openLeaderboard(from){leaderReturn=from||'start';renderLeaderboard();['start','over','share','pausePanel'].forEach(function(id){document.getElementById(id).classList.add('hide');});document.getElementById('leaderboard').classList.remove('hide');state='leaderboard';}
 function closeLeaderboard(){document.getElementById('leaderboard').classList.add('hide');if(leaderReturn==='over'){document.getElementById('over').classList.remove('hide');state='over';}else{document.getElementById('start').classList.remove('hide');state='menu';}}
@@ -389,12 +482,12 @@ function fit(){
 }
 addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(fit,150);});
 document.addEventListener('visibilitychange',function(){if(document.hidden)stop('bg');else if(state==='play')music(true);});
-function start(){var field=document.getElementById('playerName');var entered=(field.value||'').trim();if(!entered){field.focus();field.placeholder='আগে তোমার নাম লেখো!';field.style.borderColor='#ff6b6b';return;}playerName=entered.slice(0,24);field.style.borderColor='';reset();state='play';document.getElementById('start').classList.add('hide');document.getElementById('over').classList.add('hide');document.getElementById('pausePanel').classList.add('hide');document.getElementById('sc').textContent='স্কোর: 0   ❤️ 0/২';document.getElementById('pauseBtn').style.display='block';document.getElementById('pauseBtn').textContent='Ⅱ';ac();loadAudio();stop('caught');music(true);say(who(),'দাঁড়া ওই!');}
+function start(){var field=document.getElementById('playerName');var entered=(field.value||'').trim();if(!entered){field.focus();field.placeholder='আগে তোমার নাম লেখো!';field.style.borderColor='#ff6b6b';return;}playerName=entered.slice(0,24);field.style.borderColor='';reset();state='play';document.getElementById('start').classList.add('hide');document.getElementById('over').classList.add('hide');document.getElementById('pausePanel').classList.add('hide');document.getElementById('sc').textContent='স্কোর: 0   ❤️ 0/১';document.getElementById('pauseBtn').style.display='block';document.getElementById('pauseBtn').textContent='Ⅱ';ac();loadAudio();stop('caught');music(true);say(who(),'দাঁড়া ওই!');}
 document.getElementById('play').onclick=start;
 document.getElementById('showLeaderboard').onclick=function(){openLeaderboard('start');};
 document.getElementById('showLeaderboardOver').onclick=function(){openLeaderboard('over');};
 document.getElementById('leaderBack').onclick=closeLeaderboard;
-document.getElementById('clearLeaderboard').onclick=function(){if(confirm('এই ডিভাইসের লিডারবোর্ডের সব স্কোর মুছে ফেলবে?')){try{localStorage.removeItem('leaderboard');}catch(e){}renderLeaderboard();}};
+document.getElementById('refreshLeaderboard').onclick=function(){renderLeaderboard();};
 document.getElementById('playerName').addEventListener('keydown',function(e){if(e.key==='Enter')start();});
 document.getElementById('resumeBtn').onclick=function(){state='play';document.getElementById('pausePanel').classList.add('hide');document.getElementById('pauseBtn').textContent='Ⅱ';music(true);};
 document.getElementById('quitBtn').onclick=function(){state='menu';music(false);document.getElementById('pausePanel').classList.add('hide');document.getElementById('pauseBtn').style.display='none';document.getElementById('start').classList.remove('hide');};
@@ -418,7 +511,7 @@ document.getElementById('copy').onclick=function(){var bt=this;
   function fallback(){var ta=document.createElement('textarea');ta.value=LINK;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok();}catch(e){bt.textContent='লিঙ্কটি উপরে আছে';setTimeout(function(){bt.textContent='লিঙ্ক কপি';},1800);}document.body.removeChild(ta);}
   try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(LINK).then(ok,fallback);}else fallback();}catch(e){fallback();}
 };
-fit();reset();state='menu';document.getElementById('pauseBtn').style.display='none';requestAnimationFrame(loop);
+onlineLeaderboardInit();fit();reset();state='menu';document.getElementById('pauseBtn').style.display='none';requestAnimationFrame(loop);
 })();
 </script>
 </body>
