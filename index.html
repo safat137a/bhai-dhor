@@ -374,7 +374,7 @@ function spawn(){var t=Math.random(),o;
     lifePickupsSpawned++;
   } else if(Math.random()<.4)items.push({x:o.x+o.w/2+50,y:G-(165+Math.random()*30),a:Math.random()*6,type:'curry'});
   nextIn=Math.max(43,(82+Math.random()*52)-spd*1.8);}
-function hit(){C.gap-=62;P.inv=70;P.stun=26;shake=10;sfx.hit();say(sel,rnd(['আউউউ!','ধুর!','আহ্ লাগছে!']));}
+function hit(){/* Mobile: one obstacle hit should not let the chaser catch instantly. Keep desktop balance unchanged. */C.gap-=(W<700?36:62);P.inv=70;P.stun=26;shake=10;sfx.hit();say(sel,rnd(['আউউউ!','ধুর!','আহ্ লাগছে!']));}
 function update(){
   tick++;score+=spd*.02;spd=Math.min(12.5,5.8+score/55);
   P.vy+=.75;P.y+=P.vy;
