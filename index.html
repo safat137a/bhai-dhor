@@ -84,7 +84,8 @@ button:hover{filter:brightness(1.06)}button:active{transform:translateY(2px);box
     <small>কে পালাবে বেছে নাও, অন্যজন তাকে তাড়া করবে। বাধায় ধাক্কা খেলে ভাই কাছে চলে আসে, ধরা পড়লে মজা শুরু!</small>
     <label for="playerName"><b>তোমার নাম লিখো</b></label>
     <input id="playerName" type="text" maxlength="24" placeholder="যেমন: সাফাত" autocomplete="nickname" />
-    <small id="nameLockHint">একবার নাম দিলে এই ডিভাইসে সেটিই থাকবে।</small>
+    <small id="nameLockHint">প্রথমে তোমার নাম লেখো। পরে ৭ দিন পরপর নাম বদলাতে পারবে।</small>
+    <button id="editPlayerName" type="button" style="display:none;background:#3b5679;color:#fff;font-size:15px">✏️ নাম পরিবর্তন</button>
     <div class="row" id="cards"></div>
     <button id="play">খেলা শুরু</button>
     <button id="helpBtn" style="background:#3b5679;color:#fff;font-size:16px">❔ কীভাবে খেলবে?</button>
@@ -642,15 +643,45 @@ function fit(){
 }
 addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(fit,150);});
 document.addEventListener('visibilitychange',function(){if(document.hidden)stop('bg');else if(state==='play')music(true);});
-function applySavedPlayerName(){var field=document.getElementById('playerName'),hint=document.getElementById('nameLockHint');var saved='';try{saved=(localStorage.getItem('bhaiDhorPlayerName')||'').trim();}catch(e){}if(saved){playerName=saved.slice(0,24);field.value=playerName;field.readOnly=true;field.style.opacity='.8';if(hint)hint.textContent='🔒 এই ডিভাইসে নাম স্থির করা আছে—প্রতিবার নতুন নাম নেওয়া হবে না।';}}
+var nameEditMode=false;
+function applySavedPlayerName(){var field=document.getElementById('playerName'),hint=document.getElementById('nameLockHint'),editBtn=document.getElementById('editPlayerName');var saved='';try{saved=(localStorage.getItem('bhaiDhorPlayerName')||'').trim();}catch(e){}if(saved){playerName=saved.slice(0,24);field.value=playerName;field.readOnly=true;field.style.opacity='.8';editBtn.style.display='block';if(hint)hint.textContent='নাম বদলাতে চাইলে “নাম পরিবর্তন” চাপো।';}}
 applySavedPlayerName();
+function editPlayerName(){
+  var field=document.getElementById('playerName'),hint=document.getElementById('nameLockHint');
+  var last=0;try{last=Number(localStorage.getItem('bhaiDhorNameChangedAt')||0);}catch(e){}
+  var wait=7*24*60*60*1000-(Date.now()-last);
+  if(last && wait>0){var days=Math.ceil(wait/86400000);if(hint)hint.textContent='পরেরবার নাম বদলাতে আরও '+days+' দিন অপেক্ষা করতে হবে।';return;}
+  nameEditMode=true;field.readOnly=false;field.style.opacity='1';field.focus();field.select();
+  document.getElementById('play').textContent='নাম সেভ করে খেলো';
+  if(hint)hint.textContent='নতুন নাম লিখে “নাম সেভ করে খেলো” চাপো। নাম ইউনিক হতে হবে।';
+}
+function saveEditedPlayerName(newName){
+  var clean=String(newName||'').trim().slice(0,24),hint=document.getElementById('nameLockHint');
+  if(!clean){if(hint)hint.textContent='নাম খালি রাখা যাবে না।';return Promise.resolve(false);}
+  if(clean.toLocaleLowerCase()===String(playerName||'').trim().toLocaleLowerCase()){
+    nameEditMode=false;document.getElementById('playerName').readOnly=true;document.getElementById('playerName').style.opacity='.8';document.getElementById('play').textContent='খেলা শুরু';if(hint)hint.textContent='নাম পরিবর্তন করা হয়নি।';return Promise.resolve(true);
+  }
+  if(!fbReady || !fbDb || !fbUid){if(hint)hint.textContent='নাম নিরাপদে বদলাতে অনলাইন Firebase সংযোগ দরকার। ইন্টারনেট চালু করে আবার চেষ্টা করো।';return Promise.resolve(false);}
+  if(hint)hint.textContent='নামটি আগে কেউ ব্যবহার করছে কি না দেখা হচ্ছে…';
+  return fbDb.ref('leaderboard').once('value').then(function(snap){
+    var data=snap.val()||{},duplicate=false;
+    Object.keys(data).forEach(function(k){if(k!==fbUid && String((data[k]||{}).name||'').trim().toLocaleLowerCase()===clean.toLocaleLowerCase())duplicate=true;});
+    if(duplicate){if(hint)hint.textContent='এই নামটি ইতিমধ্যে নেওয়া হয়েছে। অন্য নাম বেছে নাও।';return false;}
+    var entryRef=fbDb.ref('leaderboard/'+fbUid);
+    return entryRef.once('value').then(function(entrySnap){return entryRef.update({name:clean,device:getDeviceLabel(),updatedAt:Date.now()}).then(function(){
+      playerName=clean;try{localStorage.setItem('bhaiDhorPlayerName',clean);localStorage.setItem('bhaiDhorNameChangedAt',String(Date.now()));}catch(e){}
+      nameEditMode=false;var field=document.getElementById('playerName');field.value=clean;field.readOnly=true;field.style.opacity='.8';document.getElementById('play').textContent='খেলা শুরু';if(hint)hint.textContent='নাম পরিবর্তন হয়েছে। পরেরবার ৭ দিন পর বদলাতে পারবে।';renderLeaderboard();return true;
+    });});
+  }).catch(function(err){console.warn('Name update failed',err);if(hint)hint.textContent='নাম সেভ হয়নি। ইন্টারনেট/Firebase সংযোগ পরীক্ষা করে আবার চেষ্টা করো।';return false;});
+}
 var tutorialForStart=false;
 function showTutorial(forStart){tutorialForStart=!!forStart;document.getElementById('start').classList.add('hide');document.getElementById('tutorial').classList.remove('hide');document.getElementById('tutorialDone').textContent=tutorialForStart?'বুঝেছি—খেলা শুরু':'বুঝেছি—মেনুতে ফিরি';state='tutorial';}
 function beginGame(){unlockAudio();reset();state='play';document.getElementById('tutorial').classList.add('hide');document.getElementById('start').classList.add('hide');document.getElementById('over').classList.add('hide');document.getElementById('pausePanel').classList.add('hide');document.getElementById('sc').textContent='স্কোর: 0   ❤️ 0/১';document.getElementById('pauseBtn').style.display='block';document.getElementById('pauseBtn').textContent='Ⅱ';unlockAudio();loadAudio();stop('caught');music(true);say(who(),'দাঁড়া ওই!');}
-function start(){var field=document.getElementById('playerName');var saved='';try{saved=(localStorage.getItem('bhaiDhorPlayerName')||'').trim();}catch(e){}var entered=saved||((field.value||'').trim());if(!entered){field.focus();field.placeholder='আগে তোমার নাম লেখো!';field.style.borderColor='#ff6b6b';return;}playerName=entered.slice(0,24);try{if(!saved)localStorage.setItem('bhaiDhorPlayerName',playerName);}catch(e){}field.value=playerName;field.readOnly=true;field.style.opacity='.8';var hint=document.getElementById('nameLockHint');if(hint)hint.textContent='🔒 এই ডিভাইসে নাম স্থির করা আছে—প্রতিবার নতুন নাম নেওয়া হবে না।';field.style.borderColor='';var seen=false;try{seen=localStorage.getItem('bhaiDhorTutorialSeen')==='1';}catch(e){}if(!seen){showTutorial(true);return;}beginGame();}
+function start(){var field=document.getElementById('playerName');if(nameEditMode){saveEditedPlayerName(field.value).then(function(ok){if(ok)start();});return;}var saved='';try{saved=(localStorage.getItem('bhaiDhorPlayerName')||'').trim();}catch(e){}var entered=saved||((field.value||'').trim());if(!entered){field.focus();field.placeholder='আগে তোমার নাম লেখো!';field.style.borderColor='#ff6b6b';return;}playerName=entered.slice(0,24);try{if(!saved)localStorage.setItem('bhaiDhorPlayerName',playerName);}catch(e){}field.value=playerName;field.readOnly=true;field.style.opacity='.8';var editBtn=document.getElementById('editPlayerName');if(editBtn)editBtn.style.display='block';var hint=document.getElementById('nameLockHint');if(hint)hint.textContent='নাম বদলাতে চাইলে “নাম পরিবর্তন” চাপো।';field.style.borderColor='';var seen=false;try{seen=localStorage.getItem('bhaiDhorTutorialSeen')==='1';}catch(e){}if(!seen){showTutorial(true);return;}beginGame();}
 document.getElementById('tutorialDone').onclick=function(){document.getElementById('tutorial').classList.add('hide');if(tutorialForStart){try{localStorage.setItem('bhaiDhorTutorialSeen','1');}catch(e){}beginGame();}else{state='menu';document.getElementById('start').classList.remove('hide');}};
 document.getElementById('helpBtn').onclick=function(){showTutorial(false);};
 document.getElementById('play').onclick=start;
+document.getElementById('editPlayerName').onclick=editPlayerName;
 document.getElementById('showLeaderboard').onclick=function(){openLeaderboard('start');};
 document.getElementById('showLeaderboardOver').onclick=function(){openLeaderboard('over');};
 document.getElementById('leaderBack').onclick=closeLeaderboard;
