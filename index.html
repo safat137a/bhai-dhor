@@ -173,11 +173,9 @@ function submitOnlineScore(name,score){
   setLeaderHint(scoreSaveStatus);
   entryRef.once('value').then(function(snap){
     var old=snap.val()||{};
-    var bestScore=Math.max(cleanScore,Math.floor(Number(old.score)||0));
-    return entryRef.set({name:(name||old.name||'Player').slice(0,24),device:getDeviceLabel(),score:bestScore,updatedAt:Date.now()}).then(function(){
-      scoreSaveStatus=cleanScore>=Number(old.score||0)
-        ? '🌐 স্কোর সেভ হয়েছে।'
-        : '';
+    var now=Date.now();
+    return entryRef.set({name:(name||old.name||'Player').slice(0,24),device:getDeviceLabel(),score:cleanScore,updatedAt:now}).then(function(){
+      scoreSaveStatus='🌐 সর্বশেষ স্কোর সেভ হয়েছে।';
     });
   }).then(function(){
     setLeaderHint(scoreSaveStatus);
@@ -455,7 +453,7 @@ function saveLeaderboard(name,score){
   var list=readLeaderboard();list.push({name:(name||'Player').slice(0,24),device:getDeviceLabel(),score:score,date:Date.now()});
   list.sort(function(a,b){return b.score-a.score;});list=list.slice(0,10);
   try{localStorage.setItem('leaderboard',JSON.stringify(list));}catch(e){}
-  // Each anonymous Firebase account has one entry; its score can only stay the same or improve.
+  // Save the latest completed-run score for this Firebase account.
   submitOnlineScore(name,score);
 }
 function renderLeaderboard(){
@@ -463,19 +461,15 @@ function renderLeaderboard(){
   function draw(list,online){
     box.innerHTML='';
     if(!list.length){box.innerHTML='<small style="padding:12px">এখনো কোনো স্কোর নেই। প্রথমে গেম খেলে স্কোর তৈরি করো!</small>';return;}
-    // Normalize entries and merge repeated entries for the same displayed player name.
-    // Anonymous Firebase IDs can differ across browsers/devices; duplicate records
-    // should not make the same named player occupy multiple leaderboard positions.
+    // One displayed row per player name. If the same player has multiple
+    // anonymous Firebase IDs, use that player's most recently saved score.
     var merged={};
     list.forEach(function(item){
       var nm=String(item.name||'Player').trim()||'Player';
       var key=nm.toLocaleLowerCase();
       var entry={name:nm,device:item.device||'',score:Math.max(0,Math.floor(Number(item.score)||0)),updatedAt:Number(item.updatedAt)||0};
-      if(!merged[key] || entry.score>merged[key].score){
+      if(!merged[key] || entry.updatedAt>=merged[key].updatedAt){
         merged[key]=entry;
-      }else if(entry.updatedAt>merged[key].updatedAt){
-        merged[key].device=entry.device;
-        merged[key].updatedAt=entry.updatedAt;
       }
     });
     list=Object.keys(merged).map(function(key){return merged[key];});
