@@ -20,7 +20,7 @@ h1{margin:0;font-size:clamp(22px,5vw,34px)}
 .who{background:var(--card);border:3px solid transparent;border-radius:14px;padding:10px;width:150px;cursor:pointer}
 .who.sel{border-color:var(--acc)}
 .face{width:64px;height:64px;border-radius:50%;background:#e9c9a0 center/cover;margin:0 auto 6px;border:3px solid #fff}
-.who input[type=text]{width:100%;background:#16263d;color:var(--ink);border:1px solid #3b5679;border-radius:8px;padding:5px;text-align:center;font:inherit;font-size:14px}
+.char-name{width:100%;color:var(--ink);font-weight:700;padding:5px;text-align:center;font-size:15px}
 .face.cut{background-color:transparent;background-size:contain;background-repeat:no-repeat;border:0;border-radius:0;width:78px;height:78px}
 .role{font-size:13px;margin-top:6px;color:var(--acc)}
 button{font:inherit;font-size:18px;font-weight:700;background:var(--acc);color:#3a2a00;border:0;border-radius:12px;padding:10px 26px;cursor:pointer}
@@ -73,7 +73,7 @@ var DEF=['data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAADRCAYAAABLsblJAADc
 // --- saved faces ---
 chars.forEach(function(c,i){
   setFace(i,DEF[i],false,true);
-  try{var d=localStorage.getItem('face'+i),n=localStorage.getItem('name'+i);if(n)c.name=n;if(d)setFace(i,d,false);}catch(e){}
+  try{var d=localStorage.getItem('face'+i);if(d)setFace(i,d,false);}catch(e){}
 });
 function setFace(i,url,save,cut){
   var im=new Image();im.onload=function(){chars[i].img=im;chars[i].src=url;chars[i].cut=!!cut;chars[i].skin=skinOf(im);render();
@@ -87,10 +87,9 @@ function render(){
   chars.forEach(function(c,i){
     var d=document.createElement('div');d.className='who'+(i===sel?' sel':'');d.tabIndex=0;
     d.innerHTML='<div class="face'+(c.cut?' cut':'')+'"'+(c.src?' style="background-image:url('+c.src+')"':'')+'></div>'+
-      '<input type="text" maxlength="14" value="'+c.name+'" aria-label="নাম">'+
+      '<div class="char-name">'+c.name+'</div>'+
       '<div class="role"></div>';
     d.addEventListener('click',function(){sel=i;[].forEach.call(cards.children,function(x,k){x.classList.toggle('sel',k===i);});roles();});
-    d.querySelector('input[type=text]').addEventListener('input',function(e){c.name=e.target.value;try{localStorage.setItem('name'+i,c.name);}catch(x){}});
     cards.appendChild(d);
   });
   roles();
@@ -290,7 +289,7 @@ var snd=document.getElementById('snd');snd.onclick=function(){this.blur();muted=
 document.addEventListener('pointerdown',function(){ac();loadAudio();},{once:true});
 cv.addEventListener('pointerdown',function(e){e.preventDefault();jump();});
 addEventListener('keydown',function(e){if(e.code==='Space'||e.code==='ArrowUp'){e.preventDefault();jump();}});
-var LINK='https://claude.ai/artifact/77HrSsFJThcoQ7VJWtbmoR',qrDone=false;
+var LINK='https://safat137a.github.io/bhai-dhor/',qrDone=false;
 document.getElementById('shr').onclick=function(){
   document.getElementById('start').classList.add('hide');document.getElementById('share').classList.remove('hide');
   document.getElementById('lnk').textContent=LINK;
