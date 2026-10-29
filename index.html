@@ -461,15 +461,26 @@ function renderLeaderboard(){
   function draw(list,online){
     box.innerHTML='';
     if(!list.length){box.innerHTML='<small style="padding:12px">এখনো কোনো স্কোর নেই। প্রথমে গেম খেলে স্কোর তৈরি করো!</small>';return;}
-    // One displayed row per player name. If the same player has multiple
-    // anonymous Firebase IDs, use that player's most recently saved score.
+    // One displayed row per player name. Duplicate Firebase IDs for the same
+    // player must keep the HIGHEST score; choosing the newest record could let
+    // a later low score hide an earlier 500-point score from the top 10.
     var merged={};
     list.forEach(function(item){
       var nm=String(item.name||'Player').trim()||'Player';
       var key=nm.toLocaleLowerCase();
       var entry={name:nm,device:item.device||'',score:Math.max(0,Math.floor(Number(item.score)||0)),updatedAt:Number(item.updatedAt)||0};
-      if(!merged[key] || entry.updatedAt>=merged[key].updatedAt){
+      if(!merged[key]){
         merged[key]=entry;
+      }else{
+        if(entry.score>merged[key].score){
+          merged[key].score=entry.score;
+          merged[key].name=entry.name;
+          merged[key].device=entry.device;
+        }
+        if(entry.updatedAt>merged[key].updatedAt){
+          merged[key].updatedAt=entry.updatedAt;
+          if(!merged[key].device)merged[key].device=entry.device;
+        }
       }
     });
     list=Object.keys(merged).map(function(key){return merged[key];});
