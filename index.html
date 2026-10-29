@@ -463,14 +463,16 @@ function renderLeaderboard(){
   function draw(list,online){
     box.innerHTML='';
     if(!list.length){box.innerHTML='<small style="padding:12px">এখনো কোনো স্কোর নেই। প্রথমে গেম খেলে স্কোর তৈরি করো!</small>';return;}
-    var byName={},clean=[];
-    list.forEach(function(item){
-      var nm=String(item.name||'Player').trim(),key=nm.toLocaleLowerCase();
-      var scoreValue=Math.max(0,Math.floor(Number(item.score)||0));
-      if(!byName[key]){byName[key]={name:nm,device:item.device||'',score:scoreValue,updatedAt:Number(item.updatedAt)||0};clean.push(byName[key]);}
-      else if(scoreValue>byName[key].score){byName[key].score=scoreValue;byName[key].device=item.device||byName[key].device;byName[key].updatedAt=Number(item.updatedAt)||byName[key].updatedAt;}
+    // Keep every Firebase player entry visible. Do not merge players by name:
+    // two different players may share a name, and merging could hide a new player.
+    list=list.map(function(item){
+      return {
+        name:String(item.name||'Player').trim()||'Player',
+        device:item.device||'',
+        score:Math.max(0,Math.floor(Number(item.score)||0)),
+        updatedAt:Number(item.updatedAt)||0
+      };
     });
-    list=clean;
     var myName=String(playerName||'').trim().toLocaleLowerCase();
     if(online && myName && myName!=='player'){
       var myEntry=byName[myName];
