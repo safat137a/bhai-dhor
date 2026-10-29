@@ -668,7 +668,7 @@ function saveEditedPlayerName(newName){
     Object.keys(data).forEach(function(k){if(k!==fbUid && String((data[k]||{}).name||'').trim().toLocaleLowerCase()===clean.toLocaleLowerCase())duplicate=true;});
     if(duplicate){if(hint)hint.textContent='এই নামটি ইতিমধ্যে নেওয়া হয়েছে। অন্য নাম বেছে নাও।';return false;}
     var entryRef=fbDb.ref('leaderboard/'+fbUid);
-    return entryRef.once('value').then(function(entrySnap){return entryRef.update({name:clean,device:getDeviceLabel(),updatedAt:Date.now()}).then(function(){
+    return entryRef.once('value').then(function(entrySnap){if(!entrySnap.exists()){throw new Error('Leaderboard entry not found for this user');}return entryRef.update({name:clean,updatedAt:Date.now()}).then(function(){
       playerName=clean;try{localStorage.setItem('bhaiDhorPlayerName',clean);localStorage.setItem('bhaiDhorNameChangedAt',String(Date.now()));}catch(e){}
       nameEditMode=false;var field=document.getElementById('playerName');field.value=clean;field.readOnly=true;field.style.opacity='.8';document.getElementById('play').textContent='খেলা শুরু';if(hint)hint.textContent='নাম পরিবর্তন হয়েছে। পরেরবার ৭ দিন পর বদলাতে পারবে।';renderLeaderboard();return true;
     });});
