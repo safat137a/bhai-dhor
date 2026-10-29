@@ -375,10 +375,10 @@ function spawn(){var t=Math.random(),o;
   else o={w:90,h:40,t:'bus'};
   o.x=W+20;o.phase=Math.random()*Math.PI*2;obs.push(o);
   if(Math.random()<.4)items.push({x:o.x+o.w/2+50,y:G-(165+Math.random()*30),a:Math.random()*6,type:'curry'});
-  nextIn=Math.max(43,(82+Math.random()*52)-spd*1.8);}
+  nextIn=Math.max(32,(88+Math.random()*48)-spd*3.0);}
 function hit(){/* Mobile: one obstacle hit should not let the chaser catch instantly. Keep desktop balance unchanged. */C.gap-=(W<700?36:62);P.inv=70;P.stun=26;shake=10;sfx.hit();playCollisionAudio();say(sel,rnd(['আউউউ!','ধুর!','আহ্ লাগছে!']));}
 function update(){
-  tick++;score+=spd*.02;spd=Math.min(10.5,5.0+score/65);
+  tick++;score+=spd*.02;spd=Math.min(13.5,5.0+score/42);
   P.vy+=.75;P.y+=P.vy;
   if(P.y>=G){if(P.vy>8)dust(P.x,6);P.y=G;P.vy=0;P.jumps=0;}
   if(P.inv>0)P.inv--;if(P.stun>0)P.stun--;
@@ -473,7 +473,8 @@ function renderLeaderboard(){
         updatedAt:Number(item.updatedAt)||0
       };
     });
-    // Do not derive the leaderboard from player names; render the Firebase records directly.
+    // Avoid undefined byName reference: it previously threw a ReferenceError
+    // and stopped leaderboard rows from being rendered. Rank from Firebase scores below.
     list.sort(function(a,b){return (Number(b.score)||0)-(Number(a.score)||0);});
     list=list.slice(0,10);
     list.forEach(function(item,i){
