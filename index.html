@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<title>ভাই ধর ভাইরে! — Final Voice Edition</title>
+<title>ভাই ধর ভাইরে! — Final Test Update</title>
+<meta name="game-version" content="2026.10.29-test1">
+<meta name="description" content="ভাই ধর ভাইরে! — মোবাইল ও কম্পিউটারে খেলার মজার বাংলা endless runner game.">
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#1b2a41;--card:#243b5a;--ink:#fff7e6;--acc:#ffb400;--mut:#a9bdd6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -33,7 +35,7 @@ h1{margin:0;font-size:clamp(22px,5vw,34px)}
 button{font:inherit;font-size:18px;font-weight:700;background:var(--acc);color:#3a2a00;border:0;border-radius:12px;padding:10px 26px;cursor:pointer}
 button:focus-visible,.who:focus-visible{outline:3px solid #fff;outline-offset:2px}
 small{color:var(--mut)}
-#hud{position:absolute;top:8px;left:12px;right:12px;display:flex;justify-content:space-between;font-weight:700;color:#10243d;font-size:clamp(14px,3.5vw,20px);pointer-events:none}
+#hud{position:absolute;top:8px;left:12px;right:100px;display:flex;justify-content:space-between;font-weight:700;color:#10243d;font-size:clamp(14px,3.5vw,20px);pointer-events:none}
 
 /* Polished responsive game UI */
 :root{--bg:#101b30;--card:#203957;--ink:#fff8e8;--acc:#ffd166;--mut:#c0d2e8}
@@ -54,8 +56,19 @@ button:hover{filter:brightness(1.06)}button:active{transform:translateY(2px);box
 #pauseBtn{position:absolute;top:8px;right:10px;padding:2px 9px;font-size:16px;z-index:5;display:none}
 #snd{right:54px!important;top:8px!important}
 #qr{box-shadow:0 8px 24px rgba(0,0,0,.2)}
-@media(max-width:480px){body{padding:6px}.panel{gap:11px;padding-left:12px;padding-right:12px}.who{width:132px;padding:8px}.face.cut{width:68px;height:68px}.panel>small{font-size:14px}.row{gap:9px}button{padding:11px 18px;min-height:44px}#play{min-height:48px;width:min(100%,320px)}#wrap{max-width:100vw}canvas{border-radius:10px}#hud{left:7px;right:7px;top:7px;font-size:13px}#hud span{padding:4px 8px}#pauseBtn{top:6px;right:7px}#snd{top:6px!important;right:47px!important}}
+@media(max-width:480px){body{padding:6px}.panel{gap:11px;padding-left:12px;padding-right:12px}.who{width:132px;padding:8px}.face.cut{width:68px;height:68px}.panel>small{font-size:14px}.row{gap:9px}button{padding:11px 18px;min-height:44px}#play{min-height:48px;width:min(100%,320px)}#wrap{max-width:100vw}canvas{border-radius:10px}#hud{left:6px;right:91px;top:6px;gap:4px;font-size:11px;align-items:flex-start}#hud span{padding:3px 5px;max-width:100%;font-size:11px;line-height:1.25}#sc{max-width:58%;overflow:hidden;text-overflow:ellipsis}#hi{max-width:42%;overflow:hidden;text-overflow:ellipsis}#pauseBtn{top:6px;right:6px}#snd{top:6px!important;right:45px!important}}
 @media(max-height:560px) and (orientation:landscape){body{padding:4px}.panel{gap:7px;padding-top:calc(6px + env(safe-area-inset-top,0px));padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))}.panel>:first-child{margin-top:0}.panel>:last-child{margin-bottom:0}.who{width:118px;padding:5px}.face.cut{width:52px;height:52px}button{padding:7px 14px;min-height:40px}}
+/* Mobile gameplay comfort: keep both characters left of center so hazards are visible earlier. */
+@media(max-width:700px){
+  body{padding:4px;justify-content:flex-start;}
+  #wrap{width:100%;max-width:100vw;margin-top:2px;}
+  canvas{width:100%;height:auto;}
+  #hud{left:6px;right:92px;top:6px;gap:5px;}
+  #hud span{font-size:12px;padding:4px 7px;white-space:nowrap;}
+  #pauseBtn{right:6px;top:5px;}
+  #snd{right:45px!important;top:5px!important;}
+  button{-webkit-tap-highlight-color:transparent;}
+}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -68,6 +81,7 @@ button:hover{filter:brightness(1.06)}button:active{transform:translateY(2px);box
 
   <div class="panel" id="start">
     <h1>ভাই ধর ভাইরে! 😂</h1>
+    <small id="updateNotice" style="display:block;max-width:560px;padding:8px 12px;border:1px solid rgba(255,209,102,.55);border-radius:10px;background:rgba(255,209,102,.10);color:#ffe7a3">✨ নতুন আপডেট: মোবাইলের স্কোর/বাটনের লেআউট, ঢিলের সতর্কতা ও গেমের আরামদায়ক অভিজ্ঞতা উন্নত করা হয়েছে। আগের অনলাইন স্কোর মুছতে হবে না।</small>
     <small>কে পালাবে বেছে নাও, অন্যজন তাকে তাড়া করবে। বাধায় ধাক্কা খেলে ভাই কাছে চলে আসে, ধরা পড়লে মজা শুরু!</small>
     <label for="playerName"><b>তোমার নাম লিখো</b></label>
     <input id="playerName" type="text" maxlength="24" placeholder="যেমন: সাফাত" autocomplete="nickname" />
@@ -129,7 +143,7 @@ var firebaseConfig = {
   projectId: "bhai-dhor-game",
   appId: "1:915573367098:web:cbaf32f4dcfd55efe3f003"
 };
-var fbReady=false, fbDb=null, fbUid=null, fbSetupAttempted=false, pendingOnlineScore=null, leaderboardRef=null, leaderboardValueHandler=null;
+var fbReady=false, fbDb=null, fbUid=null, fbSetupAttempted=false, pendingOnlineScore=null, leaderboardRef=null, leaderboardValueHandler=null, scoreSaveStatus='';
 function firebaseConfigured(){
   return firebaseConfig.apiKey && firebaseConfig.apiKey.indexOf('PASTE_')!==0 &&
     firebaseConfig.projectId && firebaseConfig.projectId.indexOf('PASTE_')!==0 &&
@@ -139,21 +153,35 @@ function firebaseConfigured(){
 function setLeaderHint(s){
   var el=document.getElementById('leaderHint');if(el)el.textContent=s;
 }
+function getDeviceLabel(){
+  var ua=navigator.userAgent||'';
+  if(/iPhone|iPod/i.test(ua))return 'iPhone';
+  if(/iPad/i.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1))return 'iPad';
+  if(/Android/i.test(ua))return 'Android';
+  return 'PC';
+}
 function submitOnlineScore(name,score){
   if(!firebaseConfigured())return;
   if(!fbReady || !fbDb || !fbUid){
-    if(!pendingOnlineScore || Number(score)>=Number(pendingOnlineScore.score))pendingOnlineScore={name:name,score:score};
+    if(!pendingOnlineScore || Number(score)>=Number(pendingOnlineScore.score))pendingOnlineScore={name:name,score:score,device:getDeviceLabel()};
     return;
   }
   var entryRef=fbDb.ref('leaderboard/'+fbUid);
+  var cleanScore=Math.max(0,Math.floor(Number(score)||0));
+  scoreSaveStatus='স্কোর অনলাইনে সেভ করা হচ্ছে: '+cleanScore+'…';
+  setLeaderHint(scoreSaveStatus);
   entryRef.once('value').then(function(snap){
-    var old=snap.val();
-    if(!old || Number(score)>=Number(old.score||0)){
-      return entryRef.set({name:(name||'Player').slice(0,24),score:Math.max(0,Math.floor(Number(score)||0)),updatedAt:Date.now()});
-    }
+    var old=snap.val()||{};
+    var bestScore=Math.max(cleanScore,Math.floor(Number(old.score)||0));
+    return entryRef.set({name:(name||old.name||'Player').slice(0,24),device:getDeviceLabel(),score:bestScore,updatedAt:Date.now()}).then(function(){
+      scoreSaveStatus=cleanScore>=Number(old.score||0)
+        ? '🌐 তোমার '+cleanScore+' স্কোর অনলাইনে সেভ হয়েছে।'
+        : '🌐 আগের সেরা স্কোর '+bestScore+' রাখা হয়েছে; ডিভাইসের নাম আপডেট হয়েছে।';
+    });
   }).then(function(){
+    setLeaderHint(scoreSaveStatus);
     if(document.getElementById('leaderboard') && !document.getElementById('leaderboard').classList.contains('hide'))renderLeaderboard();
-  }).catch(function(err){console.warn('Online score save failed',err);setLeaderHint('স্কোর অনলাইনে সেভ হয়নি। Database rules ও internet পরীক্ষা করো।');});
+  }).catch(function(err){console.warn('Online score save failed',err);scoreSaveStatus='⚠️ স্কোর অনলাইনে সেভ হয়নি। Firebase Database Rules/ইন্টারনেট পরীক্ষা করো।';setLeaderHint(scoreSaveStatus);});
 }
 function onlineLeaderboardInit(){
   if(fbSetupAttempted)return;fbSetupAttempted=true;
@@ -330,7 +358,7 @@ function dust(x,n){for(var i=0;i<n;i++)parts.push({x:x,y:G,vx:-1-Math.random()*2
 function confetti(x,y,n){var cs=['#ffb400','#e4572e','#2e86ab','#7bd389','#fff'];for(var i=0;i<n;i++)parts.push({x:x,y:y,vx:(Math.random()-.5)*11,vy:-Math.random()*10,life:80,c:rnd(cs),s:4+Math.random()*4,g:.35});}
 function popText(t,x,y,c){pops.push({t:t,x:x,y:y,c:c||'#fff',life:55});}
 function updParts(){pops.forEach(function(q){q.y-=1.2;q.life--;});pops=pops.filter(function(q){return q.life>0;});parts.forEach(function(q){q.x+=q.vx;q.y+=q.vy;q.vy+=q.g;q.life--;});parts=parts.filter(function(q){return q.life>0;});}
-function reset(){P={x:270,y:G,vy:0,jumps:0,inv:0,stun:0};C={y:G,vy:0,gap:220};obs=[];items=[];thrownSlippers=[];throwWarning=0;nextThrowTick=1200+Math.floor(Math.random()*300);pops=[];nextMile=100;parts=[];spd=5.8;score=0;tick=0;nextIn=60;shake=0;bub=null;bubT=120;caughtT=0;lifeCharges=0;lifePickupsSpawned=0;}
+function reset(){var mobileGame=W<700;var startX=mobileGame?W*.40:270;var startGap=mobileGame?Math.min(145,W*.29):220;P={x:startX,y:G,vy:0,jumps:0,inv:0,stun:0};C={y:G,vy:0,gap:startGap};obs=[];items=[];thrownSlippers=[];throwWarning=0;nextThrowTick=1200+Math.floor(Math.random()*300);pops=[];nextMile=100;parts=[];spd=5.8;score=0;tick=0;nextIn=60;shake=0;bub=null;bubT=120;caughtT=0;lifeCharges=0;lifePickupsSpawned=0;}
 var lastVoice=-9999,everJumped=false;
 function boing(n){var k=n>1?1.3:1;tone(260*k,.16,'sine',.07,640*k);tone(420*k,.1,'triangle',.035,900*k,.05);}
 function jump(){if(state!=='play')return;if(P.jumps<2){P.vy=P.jumps?-12.5:-14;P.jumps++;everJumped=true;var nw=performance.now();if(nw-lastVoice>6000&&Math.random()<.2){lastVoice=nw;stop('jump');if(!play('jump',.9))boing(P.jumps);}else boing(P.jumps);}}
@@ -352,13 +380,13 @@ function update(){
   if(P.y>=G){if(P.vy>8)dust(P.x,6);P.y=G;P.vy=0;P.jumps=0;}
   if(P.inv>0)P.inv--;if(P.stun>0)P.stun--;
   C.vy+=.75;C.y+=C.vy;if(C.y>=G){C.y=G;C.vy=0;}
-  C.gap=Math.min(250,C.gap+.04);
+  C.gap=Math.min(W<700?Math.min(160,P.x-42):250,C.gap+.04);
   var cx=P.x-C.gap;
   if(C.y>=G)for(var j=0;j<obs.length;j++){if(obs[j].x>cx+8&&obs[j].x<cx+80){C.vy=-13.5;break;}}
   if(throwWarning>0){
     throwWarning--;
     if(throwWarning===1){
-      thrownSlippers.push({x:P.x-C.gap+30,y:G-52,rot:-.25});
+      thrownSlippers.push({x:P.x-C.gap+27,y:G-43,rot:-.25});
       say(sel,'ঢিল আসছে—লাফ দে! 🪨');
     }
   } else if(tick>=nextThrowTick){
@@ -384,7 +412,7 @@ function update(){
       say(sel,'ইয়েস! একটা এক্সট্রা লাইফ! ❤️');
       tone(660,.1,'sine',.07,990);tone(990,.14,'triangle',.06,1320,.06);
     } else {
-      score+=10;C.gap=Math.min(250,C.gap+24);
+      score+=10;C.gap=Math.min(W<700?Math.min(160,P.x-42):250,C.gap+24);
       popText('+১০ 😋',P.x,P.y-150,'#ffd84a');
       tone(660,.1,'square',.06,990);tone(990,.12,'square',.05,1320,.08);
     }
@@ -420,7 +448,7 @@ function updCaught(){
 }
 function readLeaderboard(){try{var a=JSON.parse(localStorage.getItem('leaderboard')||'[]');return Array.isArray(a)?a:[];}catch(e){return [];}}
 function saveLeaderboard(name,score){
-  var list=readLeaderboard();list.push({name:(name||'Player').slice(0,24),score:score,date:Date.now()});
+  var list=readLeaderboard();list.push({name:(name||'Player').slice(0,24),device:getDeviceLabel(),score:score,date:Date.now()});
   list.sort(function(a,b){return b.score-a.score;});list=list.slice(0,10);
   try{localStorage.setItem('leaderboard',JSON.stringify(list));}catch(e){}
   // Each anonymous Firebase account has one entry; its score can only stay the same or improve.
@@ -437,10 +465,11 @@ function renderLeaderboard(){
       var row=document.createElement('div');row.className='leader-row';
       var rank=document.createElement('span');rank.className='leader-rank';rank.textContent=['🥇','🥈','🥉'][i]||('#'+(i+1));
       var nm=document.createElement('span');nm.className='leader-person';nm.textContent=item.name||'Player';
+      var device=document.createElement('small');device.textContent=item.device||'পুরোনো এন্ট্রি';device.style.cssText='font-size:11px;opacity:.78;white-space:nowrap;border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:2px 5px';
       var sc=document.createElement('span');sc.className='leader-score';sc.textContent=(Number(item.score)||0)+' পয়েন্ট';
-      row.appendChild(rank);row.appendChild(nm);row.appendChild(sc);box.appendChild(row);
+      row.appendChild(rank);row.appendChild(nm);row.appendChild(device);row.appendChild(sc);box.appendChild(row);
     });
-    if(online)setLeaderHint('🌐 গ্লোবাল টপ ১০ · বিভিন্ন ফোনের সেরা স্কোর');
+    if(online)setLeaderHint(scoreSaveStatus || '🌐 গ্লোবাল টপ ১০ · বিভিন্ন ফোনের সেরা স্কোর');
     else if(!fbReady)setLeaderHint('লোকাল টপ ১০ · অনলাইন সেটআপ না হওয়া পর্যন্ত শুধু এই ডিভাইসের স্কোর');
   }
   if(fbReady && fbDb){
@@ -449,7 +478,7 @@ function renderLeaderboard(){
     if(leaderboardValueHandler)leaderboardRef.off('value',leaderboardValueHandler);
     leaderboardValueHandler=function(snap){
       var data=snap.val()||{},list=[];
-      Object.keys(data).forEach(function(k){var x=data[k]||{};list.push({name:x.name||'Player',score:Number(x.score)||0,updatedAt:Number(x.updatedAt)||0});});
+      Object.keys(data).forEach(function(k){var x=data[k]||{};list.push({name:x.name||'Player',device:x.device||'পুরোনো এন্ট্রি',score:Number(x.score)||0,updatedAt:Number(x.updatedAt)||0});});
       draw(list,true);
     };
     leaderboardRef.on('value',leaderboardValueHandler,function(err){
@@ -494,7 +523,7 @@ function drawChar(ci,x,y,air,ph,lean,rot,emo,prop){
   if(c.img&&c.cut){var hw=58,hh=hw*c.img.height/c.img.width;ctx.shadowColor='rgba(255,255,255,.95)';ctx.shadowBlur=5;ctx.drawImage(c.img,-hw/2,-hh+4,hw,hh);ctx.shadowBlur=0;ctx.shadowColor='transparent';}
   else{
     ctx.save();ctx.beginPath();ctx.arc(0,-32,24,0,7);ctx.clip();
-    if(c.img)ctx.drawImage(c.img,-24,-56,48,48);
+    if(c.img)ctx.drawImage(c.img,-24,ci===1?-54:-56,48,48);
     else{ctx.fillStyle=sk;ctx.fillRect(-24,-56,48,48);ctx.fillStyle='#222';ctx.fillRect(-10,-38,5,5);ctx.fillRect(5,-38,5,5);ctx.fillRect(-8,-24,16,3);}
     ctx.restore();ctx.lineWidth=3;ctx.strokeStyle='#fff';ctx.beginPath();ctx.arc(0,-32,24,0,7);ctx.stroke();
   }
@@ -621,7 +650,7 @@ var snd=document.getElementById('snd');snd.onclick=function(){unlockAudio();this
 document.addEventListener('pointerdown',function(){unlockAudio();},{passive:true});
 document.addEventListener('touchstart',function(){unlockAudio();},{passive:true});
 cv.addEventListener('pointerdown',function(e){e.preventDefault();jump();});
-addEventListener('keydown',function(e){if(e.code==='Space'||e.code==='ArrowUp'){e.preventDefault();jump();}else if(e.code==='Escape'||e.code==='KeyP'){if(state==='play')document.getElementById('pauseBtn').click();else if(state==='paused')document.getElementById('resumeBtn').click();}});
+addEventListener('keydown',function(e){if((e.code==='Space'||e.code==='ArrowUp')&&!e.repeat){e.preventDefault();jump();}else if(e.code==='Escape'||e.code==='KeyP'){if(state==='play')document.getElementById('pauseBtn').click();else if(state==='paused')document.getElementById('resumeBtn').click();}});
 var LINK='https://safat137a.github.io/bhai-dhor/',qrDone=false;
 document.getElementById('shr').onclick=function(){
   document.getElementById('start').classList.add('hide');document.getElementById('share').classList.remove('hide');
