@@ -23,8 +23,6 @@ h1{margin:0;font-size:clamp(22px,5vw,34px)}
 .who input[type=text]{width:100%;background:#16263d;color:var(--ink);border:1px solid #3b5679;border-radius:8px;padding:5px;text-align:center;font:inherit;font-size:14px}
 .face.cut{background-color:transparent;background-size:contain;background-repeat:no-repeat;border:0;border-radius:0;width:78px;height:78px}
 .role{font-size:13px;margin-top:6px;color:var(--acc)}
-.up{display:block;margin-top:6px;font-size:13px;color:var(--acc);text-decoration:underline;cursor:pointer}
-.up input{display:none}
 button{font:inherit;font-size:18px;font-weight:700;background:var(--acc);color:#3a2a00;border:0;border-radius:12px;padding:10px 26px;cursor:pointer}
 button:focus-visible,.who:focus-visible{outline:3px solid #fff;outline-offset:2px}
 small{color:var(--mut)}
@@ -82,13 +80,6 @@ function setFace(i,url,save,cut){
     if(save){try{localStorage.setItem('face'+i,url);}catch(e){}}};
   im.src=url;
 }
-function shrink(file,i){
-  var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){
-    var s=Math.min(im.width,im.height),t=document.createElement('canvas');t.width=t.height=200;
-    t.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,200,200);
-    setFace(i,t.toDataURL('image/jpeg',.85),true);};im.src=r.result;};r.readAsDataURL(file);
-}
-
 // --- menu cards ---
 var cards=document.getElementById('cards');
 function render(){
@@ -97,11 +88,9 @@ function render(){
     var d=document.createElement('div');d.className='who'+(i===sel?' sel':'');d.tabIndex=0;
     d.innerHTML='<div class="face'+(c.cut?' cut':'')+'"'+(c.src?' style="background-image:url('+c.src+')"':'')+'></div>'+
       '<input type="text" maxlength="14" value="'+c.name+'" aria-label="নাম">'+
-      '<label class="up">ছবি দাও<input type="file" accept="image/*"></label><div class="role"></div>';
+      '<div class="role"></div>';
     d.addEventListener('click',function(){sel=i;[].forEach.call(cards.children,function(x,k){x.classList.toggle('sel',k===i);});roles();});
     d.querySelector('input[type=text]').addEventListener('input',function(e){c.name=e.target.value;try{localStorage.setItem('name'+i,c.name);}catch(x){}});
-    d.querySelector('input[type=file]').addEventListener('change',function(e){if(e.target.files[0])shrink(e.target.files[0],i);});
-    d.querySelector('.up').addEventListener('click',function(e){e.stopPropagation();});
     cards.appendChild(d);
   });
   roles();
