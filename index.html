@@ -162,54 +162,10 @@ function getDeviceLabel(){
   return 'PC';
 }
 
-function submitOnlineScore(name, score) {
-  if (!firebaseConfigured()) return;
-
-  if (!fbReady || !fbDb || !fbUid) {
-    if (!pendingOnlineScore || Number(score) >= Number(pendingOnlineScore.score)) {
-      pendingOnlineScore = {
-        name: name,
-        score: score,
-        device: getDeviceLabel()
-      };
-    }
-    return;
-  }
-
-  var entryRef = fbDb.ref('leaderboard/' + fbUid);
-  var cleanScore = Math.max(0, Math.floor(Number(score) || 0));
-
-  scoreSaveStatus = 'স্কোর অনলাইনে সেভ করা হচ্ছে...';
-  setLeaderHint(scoreSaveStatus);
-
-  entryRef.once('value').then(function(snap) {
-    var old = snap.val() || {};
-    var oldBest = Math.max(0, Math.floor(Number(old.score) || 0));
-
-    var bestScore = Math.max(cleanScore, oldBest);
-
-    return entryRef.set({
-      name: (name || old.name || 'Player').slice(0, 24),
-      device: getDeviceLabel(),
-      score: bestScore,
-      updatedAt: Date.now()
-    });
-  }).then(function() {
-    scoreSaveStatus = '🌐 সর্বোচ্চ স্কোর সেভ হয়েছে।';
-    setLeaderHint(scoreSaveStatus);
-
-    if (
-      document.getElementById('leaderboard') &&
-      !document.getElementById('leaderboard').classList.contains('hide')
-    ) {
-      renderLeaderboard();
-    }
-  }).catch(function(err) {
-    console.warn('Online score save failed', err);
-    scoreSaveStatus = '⚠️ স্কোর অনলাইনে সেভ হয়নি।';
-    setLeaderHint(scoreSaveStatus);
-  });
-}
+function submitOnlineScore(name,score){
+  if(!firebaseConfigured())return;
+  if(!fbReady || !fbDb || !fbUid){
+    if(!pendingOnlineScore || Number(score)>=Number(pendingOnlineScore.score))pendingOnlineScore={name:name,score:score,device:getDeviceLabel()};
 
   var entryRef=fbDb.ref('leaderboard/'+fbUid);
   var cleanScore=Math.max(0,Math.floor(Number(score)||0));
