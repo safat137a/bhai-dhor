@@ -169,18 +169,27 @@ function submitOnlineScore(name,score){
   }
   var entryRef=fbDb.ref('leaderboard/'+fbUid);
   var cleanScore=Math.max(0,Math.floor(Number(score)||0));
-  scoreSaveStatus='স্কোর অনলাইনে সেভ করা হচ্ছে: '+cleanScore+'…';
+  scoreSaveStatus='সর্বোচ্চ স্কোর অনলাইনে সেভ করা হচ্ছে…';
   setLeaderHint(scoreSaveStatus);
-  entryRef.once('value').then(function(snap){
-    var old=snap.val()||{};
-    var now=Date.now();
-    return entryRef.set({name:(name||old.name||'Player').slice(0,24),device:getDeviceLabel(),score:cleanScore,updatedAt:now}).then(function(){
-      scoreSaveStatus='🌐 সর্বশেষ স্কোর সেভ হয়েছে।';
-    });
-  }).then(function(){
+  entryRef.transaction(function(old){
+    old=old||{};
+    var oldBest=Math.max(0,Math.floor(Number(old.score)||0));
+    return {
+      name:(name||old.name||'Player').slice(0,24),
+      device:getDeviceLabel(),
+      score:Math.max(cleanScore,oldBest),
+      updatedAt:Date.now()
+    };
+  }).then(function(result){
+    if(!result.committed)throw new Error('স্কোর আপডেট সম্পন্ন হয়নি');
+    scoreSaveStatus='🌐 সর্বোচ্চ স্কোর সেভ হয়েছে।';
     setLeaderHint(scoreSaveStatus);
     if(document.getElementById('leaderboard') && !document.getElementById('leaderboard').classList.contains('hide'))renderLeaderboard();
-  }).catch(function(err){console.warn('Online score save failed',err);scoreSaveStatus='⚠️ স্কোর অনলাইনে সেভ হয়নি। Firebase Database Rules/ইন্টারনেট পরীক্ষা করো।';setLeaderHint(scoreSaveStatus);});
+  }).catch(function(err){
+    console.warn('Online score save failed',err);
+    scoreSaveStatus='⚠️ স্কোর অনলাইনে সেভ হয়নি। Firebase Database Rules/ইন্টারনেট পরীক্ষা করো।';
+    setLeaderHint(scoreSaveStatus);
+  });
 }
 function onlineLeaderboardInit(){
   if(fbSetupAttempted)return;fbSetupAttempted=true;
