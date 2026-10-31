@@ -161,12 +161,12 @@ function getDeviceLabel(){
   if(/Android/i.test(ua))return 'Android';
   return 'PC';
 }
-
 function submitOnlineScore(name,score){
   if(!firebaseConfigured())return;
   if(!fbReady || !fbDb || !fbUid){
     if(!pendingOnlineScore || Number(score)>=Number(pendingOnlineScore.score))pendingOnlineScore={name:name,score:score,device:getDeviceLabel()};
-
+    return;
+  }
   var entryRef=fbDb.ref('leaderboard/'+fbUid);
   var cleanScore=Math.max(0,Math.floor(Number(score)||0));
   scoreSaveStatus='স্কোর অনলাইনে সেভ করা হচ্ছে: '+cleanScore+'…';
@@ -461,26 +461,15 @@ function renderLeaderboard(){
   function draw(list,online){
     box.innerHTML='';
     if(!list.length){box.innerHTML='<small style="padding:12px">এখনো কোনো স্কোর নেই। প্রথমে গেম খেলে স্কোর তৈরি করো!</small>';return;}
-    // One displayed row per player name. Duplicate Firebase IDs for the same
-    // player must keep the HIGHEST score; choosing the newest record could let
-    // a later low score hide an earlier 500-point score from the top 10.
+    // One displayed row per player name. If the same player has multiple
+    // anonymous Firebase IDs, use that player's most recently saved score.
     var merged={};
     list.forEach(function(item){
       var nm=String(item.name||'Player').trim()||'Player';
       var key=nm.toLocaleLowerCase();
       var entry={name:nm,device:item.device||'',score:Math.max(0,Math.floor(Number(item.score)||0)),updatedAt:Number(item.updatedAt)||0};
-      if(!merged[key]){
+      if(!merged[key] || entry.updatedAt>=merged[key].updatedAt){
         merged[key]=entry;
-      }else{
-        if(entry.score>merged[key].score){
-          merged[key].score=entry.score;
-          merged[key].name=entry.name;
-          merged[key].device=entry.device;
-        }
-        if(entry.updatedAt>merged[key].updatedAt){
-          merged[key].updatedAt=entry.updatedAt;
-          if(!merged[key].device)merged[key].device=entry.device;
-        }
       }
     });
     list=Object.keys(merged).map(function(key){return merged[key];});
